@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.autograd as autograd
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
@@ -15,11 +16,14 @@ class LSTMClassifier(nn.Module):
         self.proj = nn.Linear(hidden_size, output_size, bias=True)
         self.dropout = nn.Dropout(self.dropout_rate)
 
-    def forward(self, source, target):
+    def init_hidden(self, batch_size):
+        return(autograd.Variable(torch.randn(1, batch_size, self.hidden_dim)), autograd.Variable(torch.randn(1, batch_size, self.hidden_dim)))
+
+    def forward(self, source, src_lengths):
         print("***forward***")
-        embed = self.embedding(source)
-        packed_input = pack_padded_sequence(embed, lengths)
-        output, (ht, ct) = self.lstm(packed_input, self.hidden_size)
+        x = self.embedding(source)
+        packed_input = pack_padded_sequence(x, src_lengths)
+        output, (ht, ct) = self.lstm(packed_input, init_hidden(source.size(-1)))
 
         out = self.dropout(ht.sqeeze(0))
         out = self.proj(out)

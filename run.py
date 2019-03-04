@@ -6,7 +6,8 @@ import time
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
-from readerUtils import read_discussion_forum
+from readerUtils import read_discussion_forum, torch_from_json
+from lstm import SarcasmLSTM
 
 import torch
 import torch.nn.utils
@@ -17,6 +18,8 @@ def train(args: List):
     # data source
     if 'discussion-forum' in args:
         data = read_discussion_forum()
+        word_vectors = torch_from_json("./data/word_emb.json")
+        print(word_vectors.shape)
 
 
 

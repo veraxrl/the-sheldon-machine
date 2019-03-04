@@ -6,20 +6,26 @@ import time
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
+from readerUtils import readDiscussionForum
 
 import torch
 import torch.nn.utils
 
 
-def train(args: Dict):
+def train(args: List):
+    data = []
+    # data source
+    if 'discussion-forum' in args:
+        data = readDiscussionForum()
+
+
+
+
+def decode(args: List):
     print("haha")
 
 
-def decode(args: Dict):
-    print("haha")
-
-
-# sample command: python run.py train sarcasmV2 NMT
+# sample command: python run.py train discussion-forum NMT
 def main():
     """ Main func.
     """

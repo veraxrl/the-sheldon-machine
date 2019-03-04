@@ -6,7 +6,7 @@ import time
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
-from readerUtils import readDiscussionForum
+from readerUtils import read_discussion_forum
 
 import torch
 import torch.nn.utils
@@ -16,7 +16,7 @@ def train(args: List):
     data = []
     # data source
     if 'discussion-forum' in args:
-        data = readDiscussionForum()
+        data = read_discussion_forum()
 
 
 

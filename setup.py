@@ -4,7 +4,7 @@ import spacy as spacy
 from tqdm import tqdm
 import ujson as json
 import sys
-from readerUtils import readDiscussionForum
+from readerUtils import read_discussion_forum
 from typing import List
 
 
@@ -50,7 +50,7 @@ def save(filename, obj, message=None):
             json.dump(obj, fh)
 
 
-def populateCounter(counter: Counter, data: List):
+def populate_counter(counter: Counter, data: List):
     nlp = spacy.blank("en")
     for item in data:
         for sentence in [item[0], item[1]]:  # original and response
@@ -67,9 +67,9 @@ def main():
 
     data = []
     # if 'discussion-forum' in args:
-    data = readDiscussionForum()
+    data = read_discussion_forum()
     counter = Counter()
-    populateCounter(counter, data)
+    populate_counter(counter, data)
     save_word_vector(counter=counter)
 
 

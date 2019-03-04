@@ -1,4 +1,5 @@
 .idea/
 /reddit
 .DS_Store
+data/glove.840B.300d.txt
 __pycache__/

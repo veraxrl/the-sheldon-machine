@@ -1,4 +1,8 @@
 import csv
+import numpy as np
+import pandas as pd
+from matplotlib import pyplot as plt
+from sklearn.model_selection import train_test_split
 
 '''
 Read data from file and return a list of list
@@ -24,3 +28,17 @@ def readDiscussionForum(file = "dicussion-forum-data.csv"):
 				line_count += 1
 		print('Processed {} lines.'.format(line_count))
 		return data
+
+def readReddit(file = "reddit/train-balanced-sarcasm.csv"):
+	# Import and data analysis
+	print ("-"*80)
+	print("Importing reddit training data")
+	print ("-"*80)
+	df = pd.read_csv(file)
+	print(df.shape)
+	print(df['label'].value_counts())
+	# Spliting training and validation sets
+	train_comment, valid_comment, train_label, valid_label = train_test_split(df['comment'], df['label'], train_size=0.8, test_size=0.2)
+
+if __name__ == '__main__':
+    readReddit()

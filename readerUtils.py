@@ -4,6 +4,8 @@ import ujson as json
 import torch
 import pandas as pd
 from sklearn.model_selection import train_test_split
+from typing import List
+import spacy as spacy
 
 '''
 Read data from file and return a list of list
@@ -12,12 +14,9 @@ label = 0 -> not sarcasm
 label = 1 -> sarcasm
 '''
 
-'''
-Read data from discussion forum data
-'''
-
 
 def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
+    '''Read data from discussion forum data'''
     with open(file) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -27,7 +26,8 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1
             else:
-                data.append([row[3], row[4], 1 if row[2] == 'sarc' else 0])
+                '''Remember to trim leading and trailing spaces'''
+                data.append([row[3].strip(), row[4].strip(), 1 if row[2] == 'sarc' else 0])
                 line_count += 1
         print('Processed {} lines.'.format(line_count))
         return data
@@ -50,6 +50,37 @@ def torch_from_json(path, dtype=torch.float32):
     tensor = torch.from_numpy(array).type(dtype)
 
     return tensor
+
+
+def generate_indices(data: List, padding = True):
+    '''Generate index for words. If the word doesn't exist, return 1 for that position'''
+
+    nlp = spacy.blank("en")
+    with open('./data/word2idx.json') as handle:
+        word2idx = json.loads(handle.read())
+
+    originals = []
+    responses = []
+    labels = []
+
+    for original, response, label in data:
+        originals.append([word2idx[word.text] if word.text in word2idx else 1 for word in nlp(original)])
+        responses.append([word2idx[word.text] if word.text in word2idx else 1 for word in nlp(response)])
+        labels.append(label)
+
+    if padding:
+        originals = add_padding(originals)
+        responses = add_padding(responses)
+
+    return originals, responses, labels
+
+
+def add_padding(sents: List):
+    '''Pad with 0'''
+    max_len = np.max([len(s) for s in sents])
+    for s in sents:
+        s += (max_len - len(s)) * [0]
+    return sents
 
 
 def readReddit(file="reddit/train-balanced-sarcasm.csv"):

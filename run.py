@@ -6,12 +6,8 @@ import time
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 from tqdm import tqdm
-<<<<<<< HEAD
-from readerUtils import read_discussion_forum, torch_from_json
-from lstm import SarcasmLSTM
-=======
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices
->>>>>>> Dataset with indices generated
+from lstm import SarcasmLSTM
 
 import torch
 import torch.nn.utils

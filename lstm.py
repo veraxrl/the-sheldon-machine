@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.autograd as autograd
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+from model_embeddings import ModelEmbeddings
 
 class LSTMClassifier(nn.Module):
     def __init__(self, vocab_size, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.2):
@@ -12,7 +13,7 @@ class LSTMClassifier(nn.Module):
         self.vocab_size = vocab_size
         self.batch_size = batch_size
 
-        self.embedding = nn.Embedding(vocab_size, embed_size)
+        self.embedding = ModelEmbeddings(vocab_size, embed_size)
         self.lstm = nn.LSTM(embed_size, hidden_size, bidirectional=True)
         self.proj = nn.Linear(hidden_size, output_size, bias=True)
         self.dropout = nn.Dropout(dropout_rate)
@@ -34,6 +35,6 @@ class LSTMClassifier(nn.Module):
         return out
 
 if __name__ == '__main__':
-    c = LSTMClassifier(300, 2, 5, 10, 3)
+    c = LSTMClassifier(2, 2, 5, 10, 3)
     x = torch.Tensor([[1.0, 2.0],[3.0, 4.0]])
     c.forward(x, 5)

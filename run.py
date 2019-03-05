@@ -9,9 +9,12 @@ from readerUtils import read_discussion_forum, torch_from_json, generate_indices
 from lstm import LSTMClassifier
 
 from torch import nn, optim
+import torch.utils.data as dataLoader
 import torch.nn.utils
+import torch.autograd as autograd
 
 from sarcasmData import SarcasmData
+from processing import DatasetProcessing
 
 def train(args: List):
     ### LOAD EMBEDDINGS: 
@@ -35,13 +38,21 @@ def train(args: List):
         data = read_discussion_forum()
     originals, responses, labels = generate_indices(data)
     # dataset including all tensors
-    dataset = SarcasmData(originals, responses, labels)
-    print(dataset.originals_idxs.shape)
-    print(dataset.responses_idxs.shape)
-    print(dataset.labels.shape)
+    context_dataset = DatasetProcessing(originals, responses, labels, "context")
+    response_dataset = DatasetProcessing(originals, responses, labels, "response")
+    #print(dataset.originals_idxs.shape)
+    #print(dataset.responses_idxs.shape)
+    #print(dataset.labels.view(len(labels), 1).shape)
+    
+    # expanding labels to be same dimensions so we can pack them together
+    #context_data_set = (dataset.originals_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.originals_idxs.size(1)))
+    #response_data_set = (dataset.responses_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.responses_idxs.size(1)))
+    
+    train_context_loader = dataLoader.DataLoader(context_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    train_response_loader = dataLoader.DataLoader(response_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
 
     ### MAIN: 
-    model = LSTMClassifier(vocab_size, embed_size, hidden_size, output_size, batch_size)
+    model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
     loss_function = nn.CrossEntropyLoss()
     train_loss = []
@@ -50,37 +61,46 @@ def train(args: List):
     test_acc = []
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
-        print("one epoch")
+        print("*"*10)
+        print("Epoch #")
+        print("*"*10)
         total_acc = 0.0
         total_loss = 0.0
         total = 0.0
-        #for iter, traindata in enumerate(dataset.responses_idxs):
+        for iter, traindata in enumerate(train_response_loader):
+            train_inputs, train_labels = traindata
+            #print(train_inputs.shape)
+            #print(train_labels.shape)
 
-
-def train_model(model, optimizer, train, dev, x_to_ix, y_to_ix, batch_size, max_epochs):
-    # The negative log likelihood loss. It is useful to train a classification problem with C classes.
-    criterion = nn.NLLLoss()
-    for epoch in range(max_epochs):
-        print('Epoch:', epoch)
-        y_true = list()
-        y_pred = list()
-        total_loss = 0
-        for batch, targets, lengths, raw_data in utils.create_dataset(train, x_to_ix, y_to_ix, batch_size=batch_size):
-            batch, targets, lengths = utils.sort_batch(batch, targets, lengths)
             model.zero_grad()
-            pred, loss = apply(model, criterion, batch, targets, lengths)
+            model.hidden = model.init_hidden()
+            output = model(train_inputs)
+            #print(output.shape)
+            loss = loss_function(output, train_labels)
             loss.backward()
-            optimizer.step()
-            
-            pred_idx = torch.max(pred, 1)[1]
-            y_true += list(targets.int())
-            y_pred += list(pred_idx.data.int())
-            total_loss += loss
-        acc = accuracy_score(y_true, y_pred)
-        val_loss, val_acc = evaluate_validation_set(model, dev, x_to_ix, y_to_ix, criterion)
-        print("Train loss: {} - acc: {} \nValidation loss: {} - acc: {}".format(total_loss.data.float()/len(train), acc,
-                                                                                val_loss, val_acc))
-    return model
+            #optimizer.step()
+
+            # Evaluation: acc calculation
+            _, predicted = torch.max(output.data, 1)
+            # print(predicted.tolist())
+            # print(train_labels.tolist())
+            # print("*")
+            # print((predicted == train_labels))
+            # print("*")
+            total_acc += (predicted == train_labels).sum()
+            # print(total_acc)
+            total += len(train_labels)
+            total_loss += loss.item()
+
+            #TO-DO: write better logic to stop at last batch
+            if iter > 600:
+                break
+        
+        train_loss.append(total_loss/total)
+        train_acc.append(total_acc.item()/total)
+        print(np.mean(train_loss))
+        print(np.mean(train_acc))
+
 
 def decode(args: List):
     print("haha")

@@ -42,7 +42,6 @@ def train(args: List):
     response_dataset = DatasetProcessing(originals, responses, labels, "response")
     #print(dataset.originals_idxs.shape)
     #print(dataset.responses_idxs.shape)
-    #print(dataset.labels.view(len(labels), 1).shape)
     
     # expanding labels to be same dimensions so we can pack them together
     #context_data_set = (dataset.originals_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.originals_idxs.size(1)))
@@ -59,6 +58,8 @@ def train(args: List):
     test_loss = []
     train_acc = []
     test_acc = []
+    right_sar = 0
+    all_sar = 0
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
         print("*"*10)
@@ -80,24 +81,33 @@ def train(args: List):
             loss.backward()
             #optimizer.step()
 
-            # Evaluation: acc calculation
+            # Evaluation: accuracy and precision calculation
             _, predicted = torch.max(output.data, 1)
+            gold_labels = train_labels.tolist()
+            correct_labels = (predicted == train_labels).tolist()
+            # print(gold_labels)
             # print(predicted.tolist())
-            # print(train_labels.tolist())
-            # print("*")
-            # print((predicted == train_labels))
-            # print("*")
+            # print(correct_labels)
+            # print()
+            all_sar += np.sum(gold_labels)
+            for i, clabel in enumerate(correct_labels):
+                if clabel == 1 and gold_labels[i] == 1: #correct sarcasm detection
+                    right_sar += 1
+
             total_acc += (predicted == train_labels).sum()
             # print(total_acc)
             total += len(train_labels)
             total_loss += loss.item()
 
             #TO-DO: write better logic to stop at last batch
-            if iter > 600:
+            if iter > 800:
                 break
         
+        # print(right_sar) #precision
+        # print(all_sar)
         train_loss.append(total_loss/total)
         train_acc.append(total_acc.item()/total)
+        print(right_sar/all_sar)  #sarcasm precision
         print(np.mean(train_loss))
         print(np.mean(train_acc))
 

@@ -27,7 +27,7 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
                 line_count += 1
             else:
                 '''Remember to trim leading and trailing spaces'''
-                data.append([row[3].strip(), row[4].strip(), 1 if row[2] == 'sarc' else 0])
+                data.append([row[3].strip(), row[4].strip(), 1 if row[1] == 'sarc' else 0])
                 line_count += 1
         print('Processed {} lines.'.format(line_count))
         return data
@@ -97,4 +97,6 @@ def readReddit(file="reddit/train-balanced-sarcasm.csv"):
 
 
 if __name__ == '__main__':
-    readReddit()
+    #readReddit()
+    data = read_discussion_forum()
+    originals, responses, labels = generate_indices(data)

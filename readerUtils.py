@@ -23,6 +23,8 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         line_count = 0
         data = []
         for row in csv_reader:
+            if line_count > 10:
+                break
             if line_count == 0:
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1
@@ -54,8 +56,9 @@ def torch_from_json(path, dtype=torch.float32):
 
 
 '''
+Separate every content to sentences, and generate index for each word. Pad the sentence and contents.
 sents: a list of contents
-Every content is consisted of a list of [original sentences, response sentences, label]
+Every content is consisted of a list: [original sentences, response sentences, label]
 '''
 def generate_indices(sents: List):
     '''Generate index for words. If the word doesn't exist, return 1 for that position'''
@@ -69,8 +72,9 @@ def generate_indices(sents: List):
     labels = []
 
     for content in sents:
-        original = content[0]
-        response = content[1]
+        # separate every content into a list of sentences
+        original = [sentence.text for sentence in nlp(content[0]).sents]
+        response = [sentence.text for sentence in nlp(content[1]).sents]
         label = content[2]
         originals.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in original])
         responses.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in response])

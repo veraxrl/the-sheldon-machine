@@ -7,6 +7,7 @@ from sklearn.model_selection import train_test_split
 from typing import List
 import spacy as spacy
 
+
 '''
 Read data from file and return a list of list
 every item in the list is a list of original text, response text and label
@@ -52,10 +53,14 @@ def torch_from_json(path, dtype=torch.float32):
     return tensor
 
 
-def generate_indices(data: List, padding = True):
+'''
+sents: a list of contents
+Every content is consisted of a list of [original sentences, response sentences, label]
+'''
+def generate_indices(sents: List):
     '''Generate index for words. If the word doesn't exist, return 1 for that position'''
 
-    nlp = spacy.blank("en")
+    nlp = spacy.load("en")
     with open('./data/word2idx.json') as handle:
         word2idx = json.loads(handle.read())
 
@@ -63,15 +68,17 @@ def generate_indices(data: List, padding = True):
     responses = []
     labels = []
 
-    for original, response, label in data:
-        originals.append([word2idx[word.text] if word.text in word2idx else 1 for word in nlp(original)])
-        responses.append([word2idx[word.text] if word.text in word2idx else 1 for word in nlp(response)])
+    for content in sents:
+        original = content[0]
+        response = content[1]
+        label = content[2]
+        originals.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in original])
+        responses.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in response])
         labels.append(label)
-
-    if padding:
-        originals = add_padding(originals)
-        responses = add_padding(responses)
-
+    originals = pad_sents(originals)
+    responses = pad_sents(responses)
+    # print(originals)
+    # print(responses)
     return originals, responses, labels
 
 
@@ -80,6 +87,30 @@ def add_padding(sents: List):
     max_len = np.max([len(s) for s in sents])
     for s in sents:
         s += (max_len - len(s)) * [0]
+    return sents
+
+
+'''
+@return: A list of content padded
+Every content has max_content_length of sentences
+Every sentence has max_sentence_length of words
+'''
+def pad_sents(sents: List):
+    # max_content_length = np.max([len(content) for content in sents])
+    # max_sentence_length = [len(sentence) for sentence in content for content in sents]
+    max_content_length = 5
+    max_sentence_length = 20
+    for content in sents:
+        if len(content) > max_content_length:
+            del content[max_content_length]
+        else:
+            content += (max_content_length - len(content)) * [max_sentence_length * [0]]
+
+        for sentence in content:
+            if len(sentence) > max_sentence_length:
+                del sentence[max_sentence_length]
+            else:
+                sentence += (max_sentence_length - len(sentence)) * [0]
     return sents
 
 
@@ -96,7 +127,4 @@ def readReddit(file="reddit/train-balanced-sarcasm.csv"):
                                                                               train_size=0.8, test_size=0.2)
 
 
-if __name__ == '__main__':
-    #readReddit()
-    data = read_discussion_forum()
-    originals, responses, labels = generate_indices(data)
+# if __name__ == '__main__':

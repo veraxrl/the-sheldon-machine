@@ -16,6 +16,7 @@ class LSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(embed_size, hidden_size, bidirectional=False)
         self.proj = nn.Linear(hidden_size, output_size, bias=True)
         self.dropout = nn.Dropout(dropout_rate)
+        self.softmax = nn.LogSoftmax()
 
     def init_hidden(self):
         ## Need to modify for GNU training https://github.com/jiangqy/LSTM-Classification-Pytorch/blob/master/utils/LSTMClassifier.py
@@ -24,15 +25,17 @@ class LSTMClassifier(nn.Module):
         return (h0, c0)
 
     def forward(self, source):
-        #print(source.shape)
-        x = self.embedding(source).view(1, self.batch_size, self.embed_size)
-        #print(x.shape) #  (batch, input_size) -> (1, batch, input_size)
-        output, (ht, ct) = self.lstm(x, self.init_hidden())
-
-        out = self.dropout(torch.squeeze(ht, 0))
-        out = self.proj(out) #[2, batch_size, output_size] -> bidirectional? Is this right?
-        out = F.log_softmax(out)
-        return out
+        # print(source.shape) # (batch, max_num_sents, max_num_words)
+        x = self.embedding(source)
+        x2 = x.transpose(0,1) #(max_num_sents, batch, embed_size)
+        output, (ht, ct) = self.lstm(x2, self.init_hidden())
+        
+        # print(ht.shape) = (1 * batch_size * hidden_size)
+        # print(ht[-1].shape) = (batch_size * hidden_size)
+        out = self.dropout(ht[-1])
+        out2 = self.proj(out)
+        out3 = self.softmax(out2)
+        return out3
 
 if __name__ == '__main__':
     c = LSTMClassifier(2, 2, 5, 10, 3)

@@ -23,8 +23,8 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         line_count = 0
         data = []
         for row in csv_reader:
-            # if line_count > 10:
-            #     break
+            if line_count > 10:
+                break
             if line_count == 0:
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1
@@ -63,7 +63,7 @@ Every content is consisted of a list: [original sentences, response sentences, l
 def generate_indices(sents: List):
     '''Generate index for words. If the word doesn't exist, return 1 for that position'''
 
-    nlp = spacy.load("en")
+    nlp = spacy.load("en_core_web_sm")
     with open('./data/word2idx.json') as handle:
         word2idx = json.loads(handle.read())
 
@@ -102,7 +102,7 @@ Every sentence has max_sentence_length of words
 def pad_sents(sents: List):
     # max_content_length = np.max([len(content) for content in sents])
     # max_sentence_length = [len(sentence) for sentence in content for content in sents]
-    max_content_length = 5
+    max_content_length = 8
     max_sentence_length = 20
     for content in sents:
         if len(content) > max_content_length:

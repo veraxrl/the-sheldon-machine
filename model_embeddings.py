@@ -17,12 +17,14 @@ class ModelEmbeddings(nn.Module):
 
     def forward(self, input):
         """
-        @input: Tensor of shape (batch, max_sent_length)
+        @input: Tensor of shape (batch, max_sent_length, max_word_length)
         @output: Tensor of shape (batch_size, embed_size)
         Averaged over max_sent_length
         """
-        embedding = self.embedding(input) #(batch_size, max_sent_length, embed_size)
+        embedding = self.embedding(input)
+        # print(embedding.shape)
+
         #Average over dim=2, keepdim=True
-        avg_embed = torch.mean(embedding, 1, True) #(batch_size, 1, embed_size)
-        final_embed = self.dropout(torch.squeeze(avg_embed, 1))
+        avg_embed = torch.mean(embedding, 2, True) #(batch_size, max_sent_length, embed_size)
+        final_embed = self.dropout(torch.squeeze(avg_embed, 2))
         return final_embed

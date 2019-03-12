@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
-from readerUtils import read_discussion_forum, torch_from_json, generate_indices
+from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data
 from lstm import LSTMClassifier
 
 from torch import nn, optim
@@ -36,6 +36,8 @@ def train(args: List):
     data = []
     if 'discussion-forum' in args:
         data = read_discussion_forum()
+    elif 'reddit' in args:
+        data = read_reddit_data()
     originals, responses, labels = generate_indices(data)
     # dataset including all tensors
     context_dataset = DatasetProcessing(originals, responses, labels, "context")

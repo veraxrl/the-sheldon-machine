@@ -23,8 +23,8 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         line_count = 0
         data = []
         for row in csv_reader:
-            if line_count > 10:
-                break
+            # if line_count > 10:
+            #     break
             if line_count == 0:
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1
@@ -106,29 +106,35 @@ def pad_sents(sents: List):
     max_sentence_length = 20
     for content in sents:
         if len(content) > max_content_length:
-            del content[max_content_length]
+            del content[max_content_length:]
         else:
             content += (max_content_length - len(content)) * [max_sentence_length * [0]]
 
         for sentence in content:
             if len(sentence) > max_sentence_length:
-                del sentence[max_sentence_length]
+                del sentence[max_sentence_length:]
             else:
                 sentence += (max_sentence_length - len(sentence)) * [0]
     return sents
 
 
-def readReddit(file="reddit/train-balanced-sarcasm.csv"):
-    # Import and data analysis
-    print("-" * 80)
-    print("Importing reddit training data")
-    print("-" * 80)
-    df = pd.read_csv(file)
-    print(df.shape)
-    print(df['label'].value_counts())
-    # Spliting training and validation sets
-    train_comment, valid_comment, train_label, valid_label = train_test_split(df['comment'], df['label'],
-                                                                              train_size=0.8, test_size=0.2)
+def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
+    with open(file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        data = []
+        for row in csv_reader:
+            if line_count > 10:
+                break
+            if line_count == 0:
+                print('Column names are {}'.format(", ".join(row)))
+                line_count += 1
+            else:
+                '''Remember to trim leading and trailing spaces'''
+                data.append([row[9].strip(), row[1].strip(), row[0]])
+                line_count += 1
+        print('Processed {} lines.'.format(line_count))
+        return data
 
 
 # if __name__ == '__main__':

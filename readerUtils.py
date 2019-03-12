@@ -23,8 +23,8 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         line_count = 0
         data = []
         for row in csv_reader:
-            if line_count > 10:
-                break
+            # if line_count > 100:
+            #     break
             if line_count == 0:
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1

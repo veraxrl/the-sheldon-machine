@@ -48,9 +48,10 @@ def train(args: List):
     # expanding labels to be same dimensions so we can pack them together
     #context_data_set = (dataset.originals_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.originals_idxs.size(1)))
     #response_data_set = (dataset.responses_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.responses_idxs.size(1)))
-    
-    train_context_loader = dataLoader.DataLoader(context_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
-    train_response_loader = dataLoader.DataLoader(response_dataset, batch_size=batch_size, shuffle=True, num_workers=4)
+    ctx_sampler = dataLoader.RandomSampler(context_dataset, False)
+    res_sampler = dataLoader.RandomSampler(response_dataset, False)
+    train_context_loader = dataLoader.DataLoader(context_dataset, batch_size=batch_size, sampler=ctx_sampler, num_workers=4)
+    train_response_loader = dataLoader.DataLoader(response_dataset, batch_size=batch_size, sampler=res_sampler, num_workers=4)
 
     ### MAIN: 
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)

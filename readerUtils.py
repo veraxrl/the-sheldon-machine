@@ -1,4 +1,7 @@
 import csv
+import pickle
+import random
+
 import numpy as np
 import ujson as json
 import torch
@@ -35,6 +38,23 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         print('Processed {} lines.'.format(line_count))
         return data
 
+
+'''
+Stores indices to file in the format of [contexts, responses, labels]'''
+def save_discussion_forum_data():
+    data = read_discussion_forum()
+    contexts, responses, labels = generate_indices(data)
+    with open('./data/discussion/discussion_forum_indices', 'wb') as f:
+        pickle.dump([contexts, responses, labels], f)
+
+
+def read_discussion_forum_from_file():
+    with open('./data/discussion/discussion_forum_indices', 'rb') as f:
+        my_list = pickle.load(f)
+    d = list(zip(my_list[0], my_list[1], my_list[2]))
+    random.shuffle(d)
+    contexts, responses, labels = zip(*d)
+    return contexts, responses, labels
 
 def torch_from_json(path, dtype=torch.float32):
     """Load a PyTorch Tensor from a JSON file.
@@ -83,15 +103,8 @@ def generate_indices(sents: List):
     responses = pad_sents(responses)
     # print(originals)
     # print(responses)
+    print("Generated indices for contexts and responses.")
     return originals, responses, labels
-
-
-def add_padding(sents: List):
-    '''Pad with 0'''
-    max_len = np.max([len(s) for s in sents])
-    for s in sents:
-        s += (max_len - len(s)) * [0]
-    return sents
 
 
 '''
@@ -138,3 +151,7 @@ def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
 
 
 # if __name__ == '__main__':
+    # save_discussion_forum_data()
+    # with open('./data/discussion/discussion_forum_indices', 'rb') as f:
+    #     my_list = pickle.load(f)
+    #     print(my_list)

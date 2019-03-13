@@ -17,6 +17,7 @@ class LSTMClassifier(nn.Module):
         self.proj = nn.Linear(hidden_size, output_size, bias=True)
         self.dropout = nn.Dropout(dropout_rate)
         self.softmax = nn.LogSoftmax()
+        self.hidden = self.init_hidden()
 
     def init_hidden(self):
         ## Need to modify for GNU training https://github.com/jiangqy/LSTM-Classification-Pytorch/blob/master/utils/LSTMClassifier.py
@@ -28,8 +29,10 @@ class LSTMClassifier(nn.Module):
         # print(source.shape) # (batch, max_num_sents, max_num_words)
         x = self.embedding(source)
         x2 = x.transpose(0,1) #(max_num_sents, batch, embed_size)
-        output, (ht, ct) = self.lstm(x2, self.init_hidden())
-        
+
+        output, self.hidden = self.lstm(x2, self.hidden)
+        ht, ct = self.hidden
+
         # print(ht.shape) = (1 * batch_size * hidden_size)
         # print(ht[-1].shape) = (batch_size * hidden_size)
         out = self.dropout(ht[-1])

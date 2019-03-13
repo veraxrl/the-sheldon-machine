@@ -5,7 +5,8 @@ import time
 
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
-from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data
+from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
+    read_discussion_forum_from_file
 from lstm import LSTMClassifier
 
 from torch import nn, optim
@@ -35,10 +36,11 @@ def train(args: List):
     ### DATA: 
     data = []
     if 'discussion-forum' in args:
-        data = read_discussion_forum()
+        originals, responses, labels = read_discussion_forum_from_file()
     elif 'reddit' in args:
         data = read_reddit_data()
-    originals, responses, labels = generate_indices(data)
+    # originals, responses, labels = generate_indices(data)
+
     # dataset including all tensors
     context_dataset = DatasetProcessing(originals, responses, labels, "context")
     response_dataset = DatasetProcessing(originals, responses, labels, "response")
@@ -48,10 +50,11 @@ def train(args: List):
     # expanding labels to be same dimensions so we can pack them together
     #context_data_set = (dataset.originals_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.originals_idxs.size(1)))
     #response_data_set = (dataset.responses_idxs, dataset.labels.view(len(labels), 1).expand(len(labels), dataset.responses_idxs.size(1)))
-    ctx_sampler = dataLoader.RandomSampler(context_dataset, False)
-    res_sampler = dataLoader.RandomSampler(response_dataset, False)
-    train_context_loader = dataLoader.DataLoader(context_dataset, batch_size=batch_size, sampler=ctx_sampler, num_workers=4)
-    train_response_loader = dataLoader.DataLoader(response_dataset, batch_size=batch_size, sampler=res_sampler, num_workers=4)
+
+    # ctx_sampler = dataLoader.RandomSampler(context_dataset, False)
+    # res_sampler = dataLoader.RandomSampler(response_dataset, False)
+    train_context_loader = dataLoader.DataLoader(context_dataset, batch_size=batch_size, num_workers=4)
+    train_response_loader = dataLoader.DataLoader(response_dataset, batch_size=batch_size, num_workers=4)
 
     ### MAIN: 
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
@@ -66,7 +69,7 @@ def train(args: List):
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
         print("*"*10)
-        print("Epoch #")
+        print("Epoch #{}".format(epoch))
         print("*"*10)
         total_acc = 0.0
         total_loss = 0.0
@@ -110,7 +113,7 @@ def train(args: List):
         # print(all_sar)
         train_loss.append(total_loss/total)
         train_acc.append(total_acc.item()/total)
-        print(right_sar/all_sar)  #sarcasm precision
+        print("Sarcasm precision is {}".format(right_sar/all_sar))  #sarcasm precision
         print(np.mean(train_loss))
         print(np.mean(train_acc))
 

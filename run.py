@@ -76,13 +76,13 @@ def train(args: List):
             #print(train_inputs.shape)
             #print(train_labels.shape)
 
-            model.zero_grad()
+            optimizer.zero_grad()
             model.hidden = model.init_hidden()
             output = model(train_inputs)
             #print(output.shape)
             loss = loss_function(output, train_labels)
             loss.backward()
-            #optimizer.step()
+            optimizer.step()
 
             # Evaluation: accuracy and precision calculation
             _, predicted = torch.max(output.data, 1)

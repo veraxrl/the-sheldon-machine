@@ -5,6 +5,10 @@ import time
 
 import numpy as np
 from typing import List, Tuple, Dict, Set, Union
+
+import sklearn
+from sklearn.metrics import precision_recall_fscore_support
+
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
     read_discussion_forum_from_file
 from lstm import LSTMClassifier
@@ -17,24 +21,60 @@ import torch.autograd as autograd
 from sarcasmData import SarcasmData
 from processing import DatasetProcessing
 
+
+### PARAMETER SETTING:
+epochs = 10
+use_gpu = torch.cuda.is_available()
+learning_rate = 0.01
+hidden_size = 256
+output_size = 2  # binary classification
 batch_size = 5
 
 
 def train(args: List):
-    ### LOAD EMBEDDINGS: 
+    ### LOAD EMBEDDINGS:
     test_path = "./data/word_emb.json"
     word_vectors = torch_from_json(test_path)
     print(word_vectors.shape)
 
-    ### PARAMETER SETTING:
-    epochs = 10
-    use_gpu = torch.cuda.is_available()
-    learning_rate = 0.01
     vocab_size = word_vectors.size(0)
     embed_size = word_vectors.size(1)
-    hidden_size = 256
-    output_size = 2  # binary classification
 
+    data_map = prepare_data(args)
+
+    model = train_model(word_vectors, embed_size, data_map)
+
+    evaluate_test(model, data_map)
+
+
+def prepare_data(args: List):
+    ### DATA:
+    data = []
+    if 'discussion-forum' in args:
+        originals, responses, labels = read_discussion_forum_from_file()
+    elif 'reddit' in args:
+        data = read_reddit_data()
+    # originals, responses, labels = generate_indices(data)
+
+    # split train and test
+    threshold = int(len(originals) * 0.8)
+    data_map = {}
+    data_map['train_context'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
+                                                  'context')
+    data_map['train_response'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
+                                                   'response')
+    data_map['train_label'] = labels[:threshold]
+    data_map['test_context'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
+                                                  'context')
+    data_map['test_response'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
+                                                   'response')
+    data_map['test_label'] = labels[threshold:]
+
+    # data_map['train_response'] = build_data_loader(originals, responses, labels, 'response')
+    return data_map
+
+
+def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
@@ -45,6 +85,9 @@ def train(args: List):
     test_acc = []
     right_sar = 0
     all_sar = 0
+
+    train_response_loader = data_map.get('train_response')
+
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
         print("*" * 10)
@@ -54,11 +97,9 @@ def train(args: List):
         total_loss = 0.0
         total = 0.0
 
-        data_map = prepare_data(args)
-        train_response_loader = data_map.get('train_response')
-
         for iter, traindata in enumerate(train_response_loader):
             train_inputs, train_labels = traindata
+
             if train_inputs.size()[0] < batch_size:
                 break
 
@@ -96,32 +137,7 @@ def train(args: List):
         print(np.mean(train_loss))
         print(np.mean(train_acc))
 
-
-def prepare_data(args: List):
-    ### DATA:
-    data = []
-    if 'discussion-forum' in args:
-        originals, responses, labels = read_discussion_forum_from_file()
-    elif 'reddit' in args:
-        data = read_reddit_data()
-    # originals, responses, labels = generate_indices(data)
-
-    # split train and test
-    threshold = int (len(originals) * 0.8)
-    data_map = {}
-    data_map['train_context'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
-                                                  'context')
-    data_map['train_response'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
-                                                   'response')
-    data_map['train_label'] = labels[:threshold]
-    data_map['test_context'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
-                                                  'context')
-    data_map['test_response'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
-                                                   'response')
-    data_map['test_label'] = labels[:threshold]
-
-    # data_map['train_response'] = build_data_loader(originals, responses, labels, 'response')
-    return data_map
+    return model
 
 
 def build_data_loader(originals: List, responses: List, labels: List, type):
@@ -147,8 +163,30 @@ def build_data_loader(originals: List, responses: List, labels: List, type):
 '''
 
 
-def decode(args: List):
-    print("haha")
+def evaluate_test(model, data_map):
+    test_response_loader = data_map['test_response']
+
+    all_pred_labels = []
+
+    for iter, test_data in enumerate(test_response_loader):
+        test_inputs, test_labels = test_data
+
+        if test_inputs.size()[0] < batch_size:
+            break
+
+        pred_data = model(test_inputs)
+        pred_labels = torch.max(pred_data, 1)[1]
+        all_pred_labels.extend(pred_labels)
+
+    # make sure gold_labels is truncated to the same length as all_pred_labels
+    gold_labels = data_map['test_label'][:len(all_pred_labels)]
+    evaluation = precision_recall_fscore_support(gold_labels, all_pred_labels)
+    precision = evaluation[0]
+    recall = evaluation[1]
+    fscore = evaluation[2]
+    print("Precision score for evaluation is {}".format(precision))
+    print("Recall score for evaluation is {}".format(recall))
+    print("F1 score for evaluarion is {}".format(fscore))
 
 
 # sample command: python run.py train discussion-forum NMT
@@ -159,8 +197,6 @@ def main():
 
     if 'train' in args:
         train(args)
-    elif 'decode' in args:
-        decode(args)
     else:
         raise RuntimeError('invalid run mode')
 

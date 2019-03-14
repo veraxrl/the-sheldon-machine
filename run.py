@@ -7,7 +7,7 @@ import numpy as np
 from typing import List, Tuple, Dict, Set, Union
 
 import sklearn
-from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
     read_discussion_forum_from_file
@@ -134,7 +134,7 @@ def train_model(word_vectors, embed_size, data_map):
         train_loss.append(total_loss / total)
         train_acc.append(total_acc.item() / total)
         print("Sarcasm precision is {}".format(right_sar / all_sar))  # sarcasm precision
-        print(np.mean(train_loss))
+        print("Loss is {}".format(np.mean(train_loss)))
         print(np.mean(train_acc))
 
     return model
@@ -184,9 +184,11 @@ def evaluate_test(model, data_map):
     precision = evaluation[0]
     recall = evaluation[1]
     fscore = evaluation[2]
+    accuracy = accuracy_score(gold_labels, all_pred_labels)
     print("Precision score for evaluation is {}".format(precision))
     print("Recall score for evaluation is {}".format(recall))
-    print("F1 score for evaluarion is {}".format(fscore))
+    print("F1 score for evaluation is {}".format(fscore))
+    print("Accuracy score for evaluation is {}".format(accuracy))
 
 
 # sample command: python run.py train discussion-forum NMT

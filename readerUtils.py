@@ -150,8 +150,8 @@ def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
         return data
 
 
-# if __name__ == '__main__':
-    # save_discussion_forum_data()
+if __name__ == '__main__':
+    save_discussion_forum_data()
     # with open('./data/discussion/discussion_forum_indices', 'rb') as f:
     #     my_list = pickle.load(f)
     #     print(my_list)

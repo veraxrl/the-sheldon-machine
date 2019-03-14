@@ -16,7 +16,7 @@ class LSTMClassifier(nn.Module):
         self.lstm = nn.LSTM(embed_size, hidden_size, bidirectional=False)
         self.proj = nn.Linear(hidden_size, output_size, bias=True)
         self.dropout = nn.Dropout(dropout_rate)
-        self.softmax = nn.LogSoftmax()
+        self.softmax = nn.LogSoftmax(dim=1)
         self.hidden = self.init_hidden()
 
     def init_hidden(self):

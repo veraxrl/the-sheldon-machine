@@ -47,7 +47,7 @@ def train(args: List):
     ### MAIN:
     model = CombinedAttetionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    loss_function = nn.CrossEntropyLoss()
+    loss_function = nn.NLLLoss(size_average=False)
     train_loss = []
     test_loss = []
     train_acc = []
@@ -71,6 +71,7 @@ def train(args: List):
             # print(train_label.shape)
 
             optimizer.zero_grad()
+            model.hidden = model.init_hidden()
             output = model(train_context_inputs, train_response_inputs)
             #print(output.shape)
             loss = loss_function(output, train_labels)

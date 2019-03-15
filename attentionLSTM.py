@@ -16,6 +16,7 @@ class AttetionLSTM(nn.Module):
         self.lstm = nn.LSTM(embed_size, hidden_size, bidirectional=False)
         self.s_proj = nn.Linear(hidden_size, hidden_size, bias=True)
         self.tahn = nn.Tanh()
+        self.softmax = nn.LogSoftmax(dim=1)
 
     def init_hidden(self):
         ## Need to modify for GNU training https://github.com/jiangqy/LSTM-Classification-Pytorch/blob/master/utils/LSTMClassifier.py
@@ -37,7 +38,7 @@ class AttetionLSTM(nn.Module):
         u_s = torch.randn(self.batch_size, self.hidden_size, 1)
         e_t = torch.bmm(u_i, u_s).squeeze(2)
         #print(e_t.shape) #(batch, max_num_sents)
-        alpha = nn.functional.softmax(e_t, dim=-1) #(batch, max_num_sents)
+        alpha = self.softmax(e_t) #(batch, max_num_sents)
         alpha_view = (alpha.size(0), 1, alpha.size(1))
         v = torch.bmm(alpha.view(*alpha_view), output).squeeze(1) #(batch, hidden_state) 
         #v: document vector that summarizes all info in doc

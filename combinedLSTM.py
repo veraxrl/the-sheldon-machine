@@ -17,17 +17,21 @@ class CombinedAttetionClassifier(nn.Module):
 
         self.proj = nn.Linear(hidden_size*2, output_size, bias=True)
         self.dropout = nn.Dropout(dropout_rate)
+        self.softmax = nn.LogSoftmax(dim=1)
+
+        self.LSTM_c = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        self.LSTM_r = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+
+    def init_hidden(self):
+        self.LSTM_c.hidden = self.LSTM_c.init_hidden()
+        self.LSTM_r.hidden = self.LSTM_r.init_hidden()
 
     def forward(self, context, response):
-        LSTM_c = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
-        LSTM_r = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        vc = self.LSTM_c(context)
+        vr = self.LSTM_r(response)
 
-        LSTM_c.hidden = LSTM_c.init_hidden()
-        vc = LSTM_c(context)
-        LSTM_r.hidden = LSTM_r.init_hidden()
-        vr = LSTM_r(response)
-        
         combined_v = torch.cat([vc,vr], dim=-1)
         output = self.proj(combined_v)
-        output2 = self.dropout(output)
-        return output2
+        output2 = self.softmax(output)
+        output3 = self.dropout(output2)
+        return output3

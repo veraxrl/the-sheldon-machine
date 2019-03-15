@@ -78,7 +78,8 @@ def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.SGD(model.parameters(), lr=learning_rate)
-    loss_function = nn.CrossEntropyLoss()
+    # loss_function = nn.CrossEntropyLoss()
+    loss_function = nn.NLLLoss()
     train_loss = []
     test_loss = []
     train_acc = []

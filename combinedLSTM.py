@@ -7,7 +7,7 @@ from model_embeddings import ModelEmbeddings
 from attentionLSTM import AttetionLSTM
 
 class CombinedAttetionClassifier(nn.Module):
-    def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.2):
+    def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.3):
         super(CombinedAttetionClassifier, self).__init__()
         self.vocab = vocab
         self.embed_size = embed_size

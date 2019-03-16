@@ -23,7 +23,7 @@ from concatDataset import ConcatDataset
 
 
 ### PARAMETER SETTING:
-epochs = 10
+epochs = 20
 use_gpu = torch.cuda.is_available()
 learning_rate = 0.01
 hidden_size = 256
@@ -94,7 +94,7 @@ def train_model(word_vectors, embed_size, data_map):
             train_context_inputs = train_data[0]
             train_response_inputs= train_data[1]
 
-            if train_context_inputs.size()[0] < batch_size:
+            if train_context_inputs.size()[0] < batch_size or train_response_inputs.size()[0] < batch_size:
                 break
 
             optimizer.zero_grad()

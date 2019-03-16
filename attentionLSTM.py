@@ -31,16 +31,16 @@ class AttetionLSTM(nn.Module):
         output, (ht, ct) = self.lstm(x2, self.hidden)
         output = output.view(self.batch_size, -1, self.hidden_size)
         #print(output.shape) #(batch, max_num_sents, hidden_size)
-        #print(ht.shape) #(batch, 1, hidden_size)
+        #print(ht.shape) #(1, batch, hidden_size)
         
         #Here: we want hidden states for all sents, not only the last hidden states to calculate attention
         u_i = self.tahn(self.s_proj(output)) #(batch, max_num_sents hidden_size)
         u_s = torch.ones(self.batch_size, self.hidden_size, 1)
+        #Alternatively using last hidden states in attention cal: u_s = ht.view(self.batch_size, self.hidden_size, 1)
         e_t = torch.bmm(u_i, u_s).squeeze(2)
         #print(e_t.shape) #(batch, max_num_sents)
         alpha = self.softmax(e_t) #(batch, max_num_sents)
-        alpha_view = (alpha.size(0), 1, alpha.size(1))
-        v = torch.bmm(alpha.view(*alpha_view), output).squeeze(1) #(batch, hidden_state) 
+        v = torch.bmm(output.transpose(1,2), alpha.unsqueeze(2)).squeeze(2)
         #v: document vector that summarizes all info in doc
         #print(v.shape)
 

@@ -11,7 +11,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
     read_discussion_forum_from_file
-from combinedLSTM import CombinedAttetionClassifier
+from combinedLSTM import CombinedAttentionClassifier
 
 from torch import nn, optim
 import torch.utils.data as dataLoader
@@ -71,7 +71,7 @@ def prepare_data(args: List):
 
 
 def train_model(word_vectors, embed_size, data_map):
-    model = CombinedAttetionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
+    model = CombinedAttentionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     loss_function = nn.NLLLoss()
     train_loss = []

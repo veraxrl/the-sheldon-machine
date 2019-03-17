@@ -6,17 +6,17 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from model_embeddings import ModelEmbeddings
 from attentionLSTM import AttentionLSTM
 
-class CombinedAttetionClassifier(nn.Module):
+class CombinedAttentionClassifier(nn.Module):
     def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.5):
-        super(CombinedAttetionClassifier, self).__init__()
+        super(CombinedAttentionClassifier, self).__init__()
         self.vocab = vocab
         self.embed_size = embed_size
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.batch_size = batch_size
 
-        self.LSTM_c = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
-        self.LSTM_r = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        self.LSTM_c = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        self.LSTM_r = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
 
         self.output_layer = nn.Sequential(
             nn.Dropout(p=dropout_rate),

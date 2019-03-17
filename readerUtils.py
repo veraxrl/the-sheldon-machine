@@ -59,6 +59,7 @@ def read_discussion_forum_from_file():
 
 def save_reddit_data():
     data = read_reddit_data()
+    random.shuffle(data)
     contexts, responses, labels = generate_indices(data)
     with open('./data/reddit/reddit_indices', 'wb') as f:
         pickle.dump([contexts, responses, labels], f)
@@ -118,8 +119,14 @@ def generate_indices(sents: List):
         responses.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in response])
         labels.append(label)
         count += 1
-        if count % 100 is 0:
+        if count % 1000 is 0:
             print("At count {}".format(count))
+            originals = pad_sents(originals)
+            responses = pad_sents(responses)
+            with open('./data/reddit/reddit_indices', 'wb') as f:
+                pickle.dump([originals, responses, labels], f)
+            # if count > 8000:
+            #     break
     originals = pad_sents(originals)
     responses = pad_sents(responses)
     # print(originals)
@@ -136,8 +143,8 @@ Every sentence has max_sentence_length of words
 def pad_sents(sents: List):
     # max_content_length = np.max([len(content) for content in sents])
     # max_sentence_length = [len(sentence) for sentence in content for content in sents]
-    max_content_length = 8
-    max_sentence_length = 20
+    max_content_length = 10
+    max_sentence_length = 50
     for content in sents:
         if len(content) > max_content_length:
             del content[max_content_length:]

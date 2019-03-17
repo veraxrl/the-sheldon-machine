@@ -18,7 +18,7 @@ from processing import DatasetProcessing
 ### PARAMETER SETTING:
 epochs = 15
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.005
+learning_rate = 0.01
 hidden_size = 256
 output_size = 2  # binary classification
 batch_size = 5
@@ -26,7 +26,11 @@ batch_size = 5
 
 def train(args: List):
     ### LOAD EMBEDDINGS:
-    test_path = "./data/discussion/word_emb.json"
+    if 'discussion-forum' in args:
+        test_path = "./data/discussion/word_emb.json"
+    elif 'reddit' in args:
+        test_path = "./data/reddit/word_emb.json"
+
     word_vectors = torch_from_json(test_path)
     print(word_vectors.shape)
 
@@ -67,7 +71,7 @@ def prepare_data(args: List):
 def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = ConditionalLSTM(word_vectors, embed_size, hidden_size, output_size, batch_size)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()
     train_loss = []
@@ -198,10 +202,7 @@ def main():
     """
     args = sys.argv
 
-    if 'train' in args:
-        train(args)
-    else:
-        raise RuntimeError('invalid run mode')
+    train(args)
 
 
 if __name__ == '__main__':

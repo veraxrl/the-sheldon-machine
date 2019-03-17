@@ -16,9 +16,9 @@ from processing import DatasetProcessing
 
 
 ### PARAMETER SETTING:
-epochs = 10
+epochs = 5
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.01
+learning_rate = 0.05
 hidden_size = 256
 output_size = 2  # binary classification
 batch_size = 5

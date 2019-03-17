@@ -72,7 +72,7 @@ def prepare_data(args: List):
 def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()
     train_loss = []
@@ -109,31 +109,13 @@ def train_model(word_vectors, embed_size, data_map):
             loss.backward()
             optimizer.step()
 
-            # Evaluation: accuracy and precision calculation
-            _, predicted = torch.max(output.data, 1)
-            gold_labels = train_labels.tolist()
-            correct_labels = (predicted == train_labels).tolist()
-            # print(gold_labels)
-            # print(predicted.tolist())
-            # print(correct_labels)
-            # print()
-            all_sar += np.sum(gold_labels)
-            for i, clabel in enumerate(correct_labels):
-                if clabel == 1 and gold_labels[i] == 1:  # correct sarcasm detection
-                    right_sar += 1
-
-            total_acc += (predicted == train_labels).sum()
-            # print(total_acc)
             total += len(train_labels)
             total_loss += loss.item()
 
-        # print(right_sar) #precision
-        # print(all_sar)
         train_loss.append(total_loss / total)
-        train_acc.append(total_acc.item() / total)
-        print("Sarcasm precision is {}".format(right_sar / all_sar))  # sarcasm precision
         print("Loss is {}".format(np.mean(train_loss)))
-        print(np.mean(train_acc))
+        evaluate_test(model, data_map)
+        print()
 
     return model
 
@@ -168,6 +150,7 @@ def evaluate_test(model, data_map):
     test_response_loader = data_map['test_response']
 
     all_pred_labels = []
+    model.eval()
 
     for iter, test_data in enumerate(test_response_loader):
         test_inputs, test_labels = test_data

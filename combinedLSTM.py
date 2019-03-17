@@ -6,21 +6,23 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from model_embeddings import ModelEmbeddings
 from attentionLSTM import AttentionLSTM
 
-class CombinedAttetionClassifier(nn.Module):
-    def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.3):
-        super(CombinedAttetionClassifier, self).__init__()
+class CombinedAttentionClassifier(nn.Module):
+    def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.5):
+        super(CombinedAttentionClassifier, self).__init__()
         self.vocab = vocab
         self.embed_size = embed_size
         self.hidden_size = hidden_size
         self.output_size = output_size
         self.batch_size = batch_size
 
-        self.proj = nn.Linear(hidden_size*2, output_size, bias=True)
-        self.softmax = nn.LogSoftmax(dim=1)
-        self.dropout = nn.Dropout(dropout_rate)
-
         self.LSTM_c = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
         self.LSTM_r = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+
+        self.output_layer = nn.Sequential(
+            nn.Dropout(p=dropout_rate),
+            nn.Linear(hidden_size*2, output_size, bias=True),
+            nn.LogSoftmax(dim=1),
+        )
 
     def init_hidden(self):
         self.LSTM_c.hidden = self.LSTM_c.init_hidden()
@@ -31,7 +33,5 @@ class CombinedAttetionClassifier(nn.Module):
         vr = self.LSTM_r(response)
         
         combined_v = torch.cat([vc,vr], dim=-1)
-        output = self.proj(combined_v)
-        output2 = self.softmax(output)
-        output3 = self.dropout(output2)
-        return output3
+        output = self.output_layer(combined_v)
+        return output

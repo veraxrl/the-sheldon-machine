@@ -5,9 +5,9 @@ import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from model_embeddings import ModelEmbeddings
 
-class AttetionLSTM(nn.Module):
+class AttentionLSTM(nn.Module):
     def __init__(self, vocab, embed_size, hidden_size, batch_size):
-        super(AttetionLSTM, self).__init__()
+        super(AttentionLSTM, self).__init__()
         self.embed_size = embed_size
         self.hidden_size = hidden_size
         self.batch_size = batch_size

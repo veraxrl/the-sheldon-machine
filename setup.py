@@ -4,14 +4,14 @@ import spacy as spacy
 from tqdm import tqdm
 import ujson as json
 import sys
-from readerUtils import read_discussion_forum
+from readerUtils import read_discussion_forum, read_reddit_data
 from typing import List
 
 
 def save_word_vector(counter=None, emb_file="./data/glove.840B.300d.txt", vec_size=300, num_vectors=2196017):
     emb_mat, token2idx_dict = get_embedding(counter=counter, emb_file=emb_file, vec_size=vec_size, num_vectors=num_vectors)
-    save('./data/word_emb.json', emb_mat, message="word embedding")
-    save('./data/word2idx.json', token2idx_dict, message="word dictionary")
+    save('./data/reddit/word_emb.json', emb_mat, message="word embedding")
+    save('./data/reddit/word2idx.json', token2idx_dict, message="word dictionary")
 
 
 def get_embedding(counter=None, emb_file=None, vec_size=None, num_vectors=None):
@@ -67,7 +67,8 @@ def main():
 
     data = []
     # if 'discussion-forum' in args:
-    data = read_discussion_forum()
+    # data = read_discussion_forum()
+    data = read_reddit_data()
     counter = Counter()
     populate_counter(counter, data)
     save_word_vector(counter=counter)

@@ -7,7 +7,7 @@ from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 from conditionalLSTM import ConditionalLSTM
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
-    read_discussion_forum_from_file
+    read_discussion_forum_from_file, read_reddit_data_from_file
 
 from torch import nn, optim
 import torch.utils.data as dataLoader
@@ -16,9 +16,9 @@ from processing import DatasetProcessing
 
 
 ### PARAMETER SETTING:
-epochs = 20
+epochs = 15
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.01
+learning_rate = 0.005
 hidden_size = 256
 output_size = 2  # binary classification
 batch_size = 5
@@ -26,7 +26,7 @@ batch_size = 5
 
 def train(args: List):
     ### LOAD EMBEDDINGS:
-    test_path = "./data/word_emb.json"
+    test_path = "./data/discussion/word_emb.json"
     word_vectors = torch_from_json(test_path)
     print(word_vectors.shape)
 
@@ -41,29 +41,26 @@ def train(args: List):
 
 
 def prepare_data(args: List):
-    ### DATA:
-    data = []
+    data_map = {}
     if 'discussion-forum' in args:
         originals, responses, labels = read_discussion_forum_from_file()
+
     elif 'reddit' in args:
-        data = read_reddit_data()
-    # originals, responses, labels = generate_indices(data)
+        originals, responses, labels = read_reddit_data_from_file()
 
     # split train and test
     threshold = int(len(originals) * 0.8)
-    data_map = {}
     data_map['train_context'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
                                                   'context')
     data_map['train_response'] = build_data_loader(originals[:threshold], responses[:threshold], labels[:threshold],
                                                    'response')
     data_map['train_label'] = labels[:threshold]
     data_map['test_context'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
-                                                  'context')
+                                                 'context')
     data_map['test_response'] = build_data_loader(originals[threshold:], responses[threshold:], labels[threshold:],
-                                                   'response')
+                                                  'response')
     data_map['test_label'] = labels[threshold:]
 
-    # data_map['train_response'] = build_data_loader(originals, responses, labels, 'response')
     return data_map
 
 
@@ -82,6 +79,8 @@ def train_model(word_vectors, embed_size, data_map):
 
     train_response_loader = data_map.get('train_response')
     train_context_loader = data_map.get('train_context')
+
+    model.train()
 
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
@@ -161,6 +160,9 @@ def build_data_loader(originals: List, responses: List, labels: List, type):
 
 
 def evaluate_test(model, data_map):
+
+    model.eval()
+
     test_response_loader = data_map['test_response']
     test_context_loader = data_map['test_context']
 

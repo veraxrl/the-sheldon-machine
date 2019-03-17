@@ -4,7 +4,7 @@ import torch.autograd as autograd
 import torch.nn.functional as F
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from model_embeddings import ModelEmbeddings
-from attentionLSTM import AttetionLSTM
+from attentionLSTM import AttentionLSTM
 
 class CombinedAttetionClassifier(nn.Module):
     def __init__(self, vocab, embed_size, hidden_size, output_size, batch_size, dropout_rate=0.3):
@@ -19,8 +19,8 @@ class CombinedAttetionClassifier(nn.Module):
         self.softmax = nn.LogSoftmax(dim=1)
         self.dropout = nn.Dropout(dropout_rate)
 
-        self.LSTM_c = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
-        self.LSTM_r = AttetionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        self.LSTM_c = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
+        self.LSTM_r = AttentionLSTM(self.vocab, self.embed_size, self.hidden_size, self.batch_size)
 
     def init_hidden(self):
         self.LSTM_c.hidden = self.LSTM_c.init_hidden()

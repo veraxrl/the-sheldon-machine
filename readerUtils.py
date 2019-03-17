@@ -56,6 +56,22 @@ def read_discussion_forum_from_file():
     contexts, responses, labels = zip(*d)
     return contexts, responses, labels
 
+
+def save_reddit_data():
+    data = read_reddit_data()
+    contexts, responses, labels = generate_indices(data)
+    with open('./data/reddit/reddit_indices', 'wb') as f:
+        pickle.dump([contexts, responses, labels], f)
+
+
+def read_reddit_data_from_file():
+    with open('./data/reddit/reddit_indices', 'rb') as f:
+        my_list = pickle.load(f)
+    d = list(zip(my_list[0], my_list[1], my_list[2]))
+    random.shuffle(d)
+    contexts, responses, labels = zip(*d)
+    return contexts, responses, labels
+
 def torch_from_json(path, dtype=torch.float32):
     """Load a PyTorch Tensor from a JSON file.
 
@@ -84,12 +100,14 @@ def generate_indices(sents: List):
     '''Generate index for words. If the word doesn't exist, return 1 for that position'''
 
     nlp = spacy.load("en_core_web_sm")
-    with open('./data/word2idx.json') as handle:
+    with open('./data/reddit/word2idx.json') as handle:
         word2idx = json.loads(handle.read())
 
     originals = []
     responses = []
     labels = []
+
+    count = 0
 
     for content in sents:
         # separate every content into a list of sentences
@@ -99,6 +117,9 @@ def generate_indices(sents: List):
         originals.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in original])
         responses.append([[word2idx[word.text] if word.text in word2idx else 1 for word in nlp(sentence)] for sentence in response])
         labels.append(label)
+        count += 1
+        if count % 100 is 0:
+            print("At count {}".format(count))
     originals = pad_sents(originals)
     responses = pad_sents(responses)
     # print(originals)
@@ -137,21 +158,22 @@ def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
         line_count = 0
         data = []
         for row in csv_reader:
-            if line_count > 10:
-                break
+            # if line_count > 1000:
+            #     break
             if line_count == 0:
                 print('Column names are {}'.format(", ".join(row)))
                 line_count += 1
             else:
                 '''Remember to trim leading and trailing spaces'''
-                data.append([row[9].strip(), row[1].strip(), row[0]])
+                data.append([row[9].strip(), row[1].strip(), 1 if row[0] == '1' else 0])
                 line_count += 1
         print('Processed {} lines.'.format(line_count))
         return data
 
 
 if __name__ == '__main__':
-    save_discussion_forum_data()
+    save_reddit_data()
+    # save_discussion_forum_data()
     # with open('./data/discussion/discussion_forum_indices', 'rb') as f:
     #     my_list = pickle.load(f)
     #     print(my_list)

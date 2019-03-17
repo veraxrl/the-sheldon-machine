@@ -16,12 +16,13 @@ from processing import DatasetProcessing
 
 
 ### PARAMETER SETTING:
-epochs = 15
+epochs = 30
 use_gpu = torch.cuda.is_available()
+print("Use GPU is {}".format(use_gpu))
 learning_rate = 0.01
-hidden_size = 256
+hidden_size = 128
 output_size = 2  # binary classification
-batch_size = 5
+batch_size = 10
 
 
 def train(args: List):
@@ -71,6 +72,10 @@ def prepare_data(args: List):
 def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = ConditionalLSTM(word_vectors, embed_size, hidden_size, output_size, batch_size)
+
+    if use_gpu:
+        model = model.to(torch.device("cuda:0"))
+
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()

@@ -33,7 +33,12 @@ batch_size = 16
 
 def train(args: List):
     ### LOAD EMBEDDINGS:
-    test_path = "./data/word_emb.json"
+
+    if 'discussion-forum' in args:
+        test_path = "./data/discussion/word_emb.json"
+    elif 'reddit' in args:
+        test_path = "./data/reddit/word_emb.json"
+
     word_vectors = torch_from_json(test_path)
     print(word_vectors.shape)
 

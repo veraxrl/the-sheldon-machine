@@ -43,7 +43,7 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
 Stores indices to file in the format of [contexts, responses, labels]'''
 def save_discussion_forum_data():
     data = read_discussion_forum()
-    contexts, responses, labels = generate_indices(data)
+    contexts, responses, labels = generate_indices(data, "discussion")
     with open('./data/discussion/discussion_forum_indices', 'wb') as f:
         pickle.dump([contexts, responses, labels], f)
 
@@ -59,7 +59,7 @@ def read_discussion_forum_from_file():
 
 def save_reddit_data():
     data = read_reddit_data()
-    contexts, responses, labels = generate_indices(data)
+    contexts, responses, labels = generate_indices(data, "reddit")
     with open('./data/reddit/reddit_indices', 'wb') as f:
         pickle.dump([contexts, responses, labels], f)
 
@@ -96,12 +96,17 @@ Separate every content to sentences, and generate index for each word. Pad the s
 sents: a list of contents
 Every content is consisted of a list: [original sentences, response sentences, label]
 '''
-def generate_indices(sents: List):
+def generate_indices(sents: List, tag):
     '''Generate index for words. If the word doesn't exist, return 1 for that position'''
 
     nlp = spacy.load("en_core_web_sm")
-    with open('./data/reddit/word2idx.json') as handle:
-        word2idx = json.loads(handle.read())
+    if tag == "discussion":
+        word2idxPath = './data/discussion/word2idx.json'
+    else:
+        word2idxPath = './data/reddit/word2idx.json'\
+
+    with open('./data/discussion/word2idx.json') as handle:
+            word2idx = json.loads(handle.read())
 
     originals = []
     responses = []

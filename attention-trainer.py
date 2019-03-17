@@ -25,10 +25,10 @@ from concatDataset import ConcatDataset
 ### PARAMETER SETTING:
 epochs = 20
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.01
+learning_rate = 0.001
 hidden_size = 256
 output_size = 2  # binary classification
-batch_size = 5
+batch_size = 16
 
 
 def train(args: List):
@@ -66,10 +66,8 @@ def prepare_data(args: List):
 
 
 def train_model(word_vectors, embed_size, data_map):
-    ### MAIN:
     model = CombinedAttetionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-    # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()
     train_loss = []
     test_loss = []
@@ -79,12 +77,14 @@ def train_model(word_vectors, embed_size, data_map):
     all_sar = 0
 
     train_concat_loader = data_map.get('train_concat')
+    print(model)
+    model.train() #enable dropout
 
     for epoch in range(epochs):
         # Adjust learning rate using optimizer
         print("*" * 10)
         print("Epoch #{}".format(epoch))
-        print("*" * 10)
+        print("*" * 10)        
         total_acc = 0.0
         total_loss = 0.0
         total = 0.0
@@ -100,36 +100,17 @@ def train_model(word_vectors, embed_size, data_map):
             optimizer.zero_grad()
             model.init_hidden()
             output = model(train_context_inputs, train_response_inputs)
-            # print(output.shape)
             loss = loss_function(output, train_labels)
             loss.backward()
             optimizer.step()
 
-            # Evaluation: accuracy and precision calculation
-            _, predicted = torch.max(output.data, 1)
-            gold_labels = train_labels.tolist()
-            correct_labels = (predicted == train_labels).tolist()
-            # print(gold_labels)
-            # print(predicted.tolist())
-            # print(correct_labels)
-            # print()
-            all_sar += np.sum(gold_labels)
-            for i, clabel in enumerate(correct_labels):
-                if clabel == 1 and gold_labels[i] == 1:  # correct sarcasm detection
-                    right_sar += 1
-
-            total_acc += (predicted == train_labels).sum()
-            # print(total_acc)
             total += len(train_labels)
             total_loss += loss.item()
 
-        # print(right_sar) #precision
-        # print(all_sar)
         train_loss.append(total_loss / total)
-        train_acc.append(total_acc.item() / total)
-        print("Sarcasm precision is {}".format(right_sar / all_sar))  # sarcasm precision
         print("Loss is {}".format(np.mean(train_loss)))
-        print(np.mean(train_acc))
+        evaluate_test(model, data_map)
+        print()
 
     return model
 
@@ -161,6 +142,7 @@ def evaluate_test(model, data_map):
     test_concat_loader = data_map['test_concat']
 
     all_pred_labels = []
+    model.eval()
 
     for iter, test_data in enumerate(test_concat_loader):
         test_inputs, test_labels = test_data

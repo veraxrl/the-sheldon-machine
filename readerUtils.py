@@ -136,8 +136,8 @@ Every sentence has max_sentence_length of words
 def pad_sents(sents: List):
     # max_content_length = np.max([len(content) for content in sents])
     # max_sentence_length = [len(sentence) for sentence in content for content in sents]
-    max_content_length = 8
-    max_sentence_length = 20
+    max_content_length = 10
+    max_sentence_length = 50
     for content in sents:
         if len(content) > max_content_length:
             del content[max_content_length:]
@@ -172,8 +172,8 @@ def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
 
 
 if __name__ == '__main__':
-    save_reddit_data()
-    # save_discussion_forum_data()
+    # read_discussion_forum()
+    save_discussion_forum_data()
     # with open('./data/discussion/discussion_forum_indices', 'rb') as f:
     #     my_list = pickle.load(f)
     #     print(my_list)

@@ -16,7 +16,7 @@ from processing import DatasetProcessing
 
 
 ### PARAMETER SETTING:
-epochs = 10
+epochs = 20
 use_gpu = torch.cuda.is_available()
 learning_rate = 0.01
 hidden_size = 256
@@ -72,7 +72,7 @@ def prepare_data(args: List):
 def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()
     train_loss = []
@@ -168,6 +168,7 @@ def evaluate_test(model, data_map):
     test_response_loader = data_map['test_response']
 
     all_pred_labels = []
+    model.eval()
 
     for iter, test_data in enumerate(test_response_loader):
         test_inputs, test_labels = test_data

@@ -652,14 +652,18 @@ def main():
 
             eval_loss += tmp_eval_loss.mean().item()
             eval_accuracy += tmp_eval_accuracy
-            
-            eval_tp += np.sum(predicted == label_ids and predicted == 1)
-            eval_true_sarc += np.sum(label_ids)
-            eval_predict_sarc += np.sum(np.argmax(logits, axis=1))
 
-            eval_tp_non += np.sum(predicted == label_ids and predicted == 0)
-            eval_true_non += len(label_ids) - eval_true_sarc
-            eval_predict_non += len(logits) - eval_predict_sarc
+            a1 = np.array(predicted == label_ids)
+            a2 = np.array(predicted == 1)
+            a3 = np.array(predicted == 0)
+            
+            eval_tp += np.sum(a1 & a2)
+            eval_true_sarc += np.sum(label_ids)
+            eval_predict_sarc += np.sum(predicted)
+
+            eval_tp_non += np.sum(a1 & a3)
+            eval_true_non += np.sum(label_ids == 0)
+            eval_predict_non += np.sum(predicted == 0)
             #eval_recall = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1) == label_ids)
             #eval_fscore = 2 * eval_recall * eval_precision / (eval_recall + eval_precision)
 

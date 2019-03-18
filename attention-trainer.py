@@ -23,10 +23,10 @@ from concatDataset import ConcatDataset
 
 
 ### PARAMETER SETTING:
-epochs = 20
+epochs = 15
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.001
-hidden_size = 256
+learning_rate = 0.005
+hidden_size = 128
 output_size = 2  # binary classification
 batch_size = 16
 
@@ -72,6 +72,10 @@ def prepare_data(args: List):
 
 def train_model(word_vectors, embed_size, data_map):
     model = CombinedAttentionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
+    
+    if use_gpu:
+        model = model.to(torch.device("cuda:0"))
+    
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     loss_function = nn.NLLLoss()
     train_loss = []
@@ -83,9 +87,10 @@ def train_model(word_vectors, embed_size, data_map):
 
     train_concat_loader = data_map.get('train_concat')
     print(model)
-    model.train() #enable dropout
 
     for epoch in range(epochs):
+        model.train() #enable dropout
+
         # Adjust learning rate using optimizer
         print("*" * 10)
         print("Epoch #{}".format(epoch))

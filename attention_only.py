@@ -24,10 +24,11 @@ from concatDataset import ConcatDataset
 
 
 ### PARAMETER SETTING:
-epochs = 10
+epochs = 15
 use_gpu = torch.cuda.is_available()
+print("Use GPU is {}".format(use_gpu))
 learning_rate = 0.001
-hidden_size = 256
+hidden_size = 128
 output_size = 2  # binary classification
 batch_size = 16
 
@@ -73,6 +74,10 @@ def prepare_data(args: List):
 
 def train_model(word_vectors, embed_size, data_map):
     model = AttentionLSTM(word_vectors, embed_size, hidden_size, batch_size)
+
+    if use_gpu:
+        model = model.to(torch.device("cuda:0"))
+
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     loss_function = nn.CrossEntropyLoss()
     train_loss = []

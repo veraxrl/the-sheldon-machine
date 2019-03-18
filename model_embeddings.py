@@ -30,5 +30,5 @@ class ModelEmbeddings(nn.Module):
         avg_embed = emb / lengths
 
         # avg_embed = torch.mean(embedding, 2, True) #(batch_size, max_sent_length, embed_size)
-        final_embed = self.dropout(torch.squeeze(avg_embed, 2))
+        final_embed = self.dropout(avg_embed)
         return final_embed

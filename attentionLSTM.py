@@ -16,8 +16,9 @@ class AttentionLSTM(nn.Module):
         #self.embedding.weight.requires_grad = False
         self.lstm = nn.LSTM(embed_size, hidden_size, bidirectional=False)
         self.s_proj = nn.Linear(hidden_size, hidden_size, bias=True)
-        self.tahn = nn.Tanh()
+        self.tanh = nn.Tanh()
         self.u_s = nn.Parameter(torch.ones(self.batch_size, self.hidden_size, 1))
+        # self.last_proj = nn.Linear(hidden_size, 2)
 
     def init_hidden(self):
         ## Need to modify for GNU training https://github.com/jiangqy/LSTM-Classification-Pytorch/blob/master/utils/LSTMClassifier.py
@@ -35,12 +36,13 @@ class AttentionLSTM(nn.Module):
         #print(ht.shape) #(1, batch, hidden_size)
         
         #Here: we want hidden states for all sents, not only the last hidden states to calculate attention
-        u_i = self.tahn(self.s_proj(output)) #(batch, max_num_sents hidden_size)
+        u_i = self.tanh(self.s_proj(output)) #(batch, max_num_sents hidden_size)
         #Alternatively using last hidden states in attention cal: u_s = ht.view(self.batch_size, self.hidden_size, 1)
         e_t = torch.bmm(u_i, self.u_s).squeeze(2)
         #print(e_t.shape) #(batch, max_num_sents)
         alpha = F.softmax(e_t, dim=1) #(batch, max_num_sents)
         v = torch.bmm(output.transpose(1,2), alpha.unsqueeze(2)).squeeze(2)
+        # u = self.dropout(self.last_proj(v))
         #v: document vector that summarizes all info in doc
         #print(v.shape)
 

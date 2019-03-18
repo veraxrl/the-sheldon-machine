@@ -629,7 +629,8 @@ def main():
         eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
         model.eval()
-        eval_loss, eval_accuracy, eval_precision, eval_recall, eval_fscore = 0, 0, 0, 0, 0
+        eval_loss, eval_accuracy, eval_true_sarc, eval_predict_sarc, eval_tp = 0, 0, 0, 0, 0
+        eval_tp_non, eval_true_non, eval_predict_non = 0, 0, 0
         nb_eval_steps, nb_eval_examples = 0, 0
 
         for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
@@ -647,27 +648,38 @@ def main():
             tmp_eval_accuracy = accuracy(logits, label_ids)
 
             evaluation = precision_recall_fscore_support(label_ids, np.argmax(logits, axis=1))
+            predicted = np.argmax(logits, axis=1)
 
             eval_loss += tmp_eval_loss.mean().item()
             eval_accuracy += tmp_eval_accuracy
-            eval_precision = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1))
-            eval_recall = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1) == label_ids)
-            eval_fscore = 2 * eval_recall * eval_precision / (eval_recall + eval_precision)
+            
+            eval_tp += np.sum(predicted == label_ids and predicted == 1)
+            eval_true_sarc += np.sum(label_ids)
+            eval_predict_sarc += np.sum(np.argmax(logits, axis=1))
+
+            eval_tp_non += np.sum(predicted == label_ids and predicted == 0)
+            eval_true_non += len(label_ids) - eval_true_sarc
+            eval_predict_non += len(logits) - eval_predict_sarc
+            #eval_recall = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1) == label_ids)
+            #eval_fscore = 2 * eval_recall * eval_precision / (eval_recall + eval_precision)
 
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1
 
         eval_loss = eval_loss / nb_eval_steps
         eval_accuracy = eval_accuracy / nb_eval_examples
-        # eval_precision = eval_precision / nb_eval_examples
+        eval_precision = eval_true_sarc / eval_predict_sarc
         # eval_recall = eval_recall / nb_eval_examples
         # eval_fscore = eval_fscore / nb_eval_examples
         loss = tr_loss/nb_tr_steps if args.do_train else None
         result = {'eval_loss': eval_loss,
                   'eval_accuracy': eval_accuracy,
-                  'eval_precision': eval_precision,
-                  'eval_recall': eval_recall, 
-                  'eval_fscore': eval_fscore,
+                  'eval_tp': eval_tp,
+                  'eval_true_sarc': eval_true_sarc,
+                  'eval_predict_sarc': eval_predict_sarc,
+                  'eval_tp_non': eval_tp_non,
+                  'eval_true_non': eval_true_non,
+                  'eval_predict_non': eval_predict_non,
                   'global_step': global_step,
                   'loss': loss}
 

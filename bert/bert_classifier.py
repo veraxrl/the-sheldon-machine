@@ -650,9 +650,9 @@ def main():
 
             eval_loss += tmp_eval_loss.mean().item()
             eval_accuracy += tmp_eval_accuracy
-            eval_precision = evaluation[0]
-            eval_recall = evaluation[1]
-            eval_fscore = evaluation[2]
+            eval_precision = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1))
+            eval_recall = np.sum(label_ids) / np.sum(np.argmax(logits, axis=1) == label_ids)
+            eval_fscore = 2 * eval_recall * eval_precision / (eval_recall + eval_precision)
 
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1

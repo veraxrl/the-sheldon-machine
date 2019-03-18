@@ -27,6 +27,25 @@ def read_discussion_forum(file="./data/dicussion-forum-data.csv"):
         print('Processed {} lines.'.format(line_count-1))
         return data
 
+def read_reddit_data(file="./reddit/train-balanced-sarcasm.csv"):
+    '''Read data from reddit data'''
+    with open(file) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        data = []
+        for row in csv_reader:
+            # if line_count > 100:
+            #     break
+            if line_count == 0:
+                print('Column names are {}'.format(", ".join(row)))
+                line_count += 1
+            else:
+                '''Remember to trim leading and trailing spaces'''
+                data.append([1 if row[0] == '1' else 0, "a", row[1].strip()])
+                line_count += 1
+        print('Processed {} lines.'.format(line_count))
+        return data
+
 def write(data):
     threshold = int((len(data)-1) * 0.8)
     threshold2 = int((len(data)-1) * 0.9)
@@ -59,6 +78,7 @@ def toTSV():
 
 
 if __name__ == '__main__':
-    data = read_discussion_forum()
+    # data = read_discussion_forum()
+    data = read_reddit_data()
     write(data)
     toTSV()

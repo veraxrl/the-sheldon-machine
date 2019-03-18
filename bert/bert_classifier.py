@@ -36,6 +36,8 @@ from pytorch_pretrained_bert.modeling import BertForSequenceClassification, Bert
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
 
+from sklearn.metrics import precision_recall_fscore_support, accuracy_score
+
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
                     level = logging.INFO)
@@ -627,7 +629,7 @@ def main():
         eval_dataloader = DataLoader(eval_data, sampler=eval_sampler, batch_size=args.eval_batch_size)
 
         model.eval()
-        eval_loss, eval_accuracy = 0, 0
+        eval_loss, eval_accuracy, eval_precision, eval_recall, eval_fscore = 0, 0, 0, 0, 0
         nb_eval_steps, nb_eval_examples = 0, 0
 
         for input_ids, input_mask, segment_ids, label_ids in tqdm(eval_dataloader, desc="Evaluating"):
@@ -644,17 +646,28 @@ def main():
             label_ids = label_ids.to('cpu').numpy()
             tmp_eval_accuracy = accuracy(logits, label_ids)
 
+            evaluation = precision_recall_fscore_support(label_ids, np.argmax(logits, axis=1))
+
             eval_loss += tmp_eval_loss.mean().item()
             eval_accuracy += tmp_eval_accuracy
+            eval_precision = evaluation[0]
+            eval_recall = evaluation[1]
+            eval_fscore = evaluation[2]
 
             nb_eval_examples += input_ids.size(0)
             nb_eval_steps += 1
 
         eval_loss = eval_loss / nb_eval_steps
         eval_accuracy = eval_accuracy / nb_eval_examples
+        # eval_precision = eval_precision / nb_eval_examples
+        # eval_recall = eval_recall / nb_eval_examples
+        # eval_fscore = eval_fscore / nb_eval_examples
         loss = tr_loss/nb_tr_steps if args.do_train else None
         result = {'eval_loss': eval_loss,
                   'eval_accuracy': eval_accuracy,
+                  'eval_precision': eval_precision,
+                  'eval_recall': eval_recall, 
+                  'eval_fscore': eval_fscore,
                   'global_step': global_step,
                   'loss': loss}
 

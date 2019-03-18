@@ -1,8 +1,6 @@
 .idea/
 /reddit
-/data
 .DS_Store
 data/glove.840B.300d.txt
 __pycache__/
-/data/discussion
 /bert/bert_output

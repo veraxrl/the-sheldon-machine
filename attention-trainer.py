@@ -10,7 +10,7 @@ import sklearn
 from sklearn.metrics import precision_recall_fscore_support, accuracy_score
 
 from readerUtils import read_discussion_forum, torch_from_json, generate_indices, read_reddit_data, \
-    read_discussion_forum_from_file
+    read_discussion_forum_from_file, read_reddit_data_from_file
 from combinedLSTM import CombinedAttentionClassifier
 
 from torch import nn, optim
@@ -25,7 +25,7 @@ from concatDataset import ConcatDataset
 ### PARAMETER SETTING:
 epochs = 15
 use_gpu = torch.cuda.is_available()
-learning_rate = 0.005
+learning_rate = 0.001
 hidden_size = 128
 output_size = 2  # binary classification
 batch_size = 16
@@ -58,7 +58,7 @@ def prepare_data(args: List):
     if 'discussion-forum' in args:
         originals, responses, labels = read_discussion_forum_from_file()
     elif 'reddit' in args:
-        data = read_reddit_data()
+        originals, responses, labels = read_reddit_data_from_file()
 
     # split train and test
     threshold = int(len(originals) * 0.8)
@@ -74,7 +74,7 @@ def train_model(word_vectors, embed_size, data_map):
     model = CombinedAttentionClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
     
     if use_gpu:
-        model = model.to(torch.device("cuda:0"))
+        model.cuda()
     
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     loss_function = nn.NLLLoss()
@@ -101,8 +101,14 @@ def train_model(word_vectors, embed_size, data_map):
 
         for iter, traindata in enumerate(train_concat_loader):
             train_data, train_labels = traindata
-            train_context_inputs = train_data[0]
-            train_response_inputs= train_data[1]
+
+            if use_gpu:
+                train_context_inputs = train_data[0].cuda()
+                train_response_inputs = train_data[1].cuda()
+                train_labels = train_labels.cuda()
+            else: 
+                train_context_inputs = train_data[0]
+                train_response_inputs= train_data[1]
 
             if train_context_inputs.size()[0] < batch_size or train_response_inputs.size()[0] < batch_size:
                 break
@@ -149,21 +155,27 @@ def build_data_loader(originals: List, responses: List, labels: List):
 
 
 def evaluate_test(model, data_map):
+
+    model.eval()
+
     test_concat_loader = data_map['test_concat']
 
     all_pred_labels = []
-    model.eval()
 
     for iter, test_data in enumerate(test_concat_loader):
         test_inputs, test_labels = test_data
-        test_context_inputs = test_inputs[0]
-        test_response_inputs= test_inputs[1]
+        if use_gpu:
+            test_context_inputs = test_inputs[0].cuda()
+            test_response_inputs= test_inputs[1].cuda()
+        else: 
+            test_context_inputs = test_inputs[0]
+            test_response_inputs= test_inputs[1]
 
         if test_context_inputs.size()[0] < batch_size or test_response_inputs.size()[0] < batch_size:
             break
 
         pred_data = model(test_context_inputs, test_response_inputs)
-        pred_labels = torch.max(pred_data, 1)[1]
+        pred_labels = torch.max(pred_data, 1)[1].cpu()
         all_pred_labels.extend(pred_labels)
 
     # make sure gold_labels is truncated to the same length as all_pred_labels

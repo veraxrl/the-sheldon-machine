@@ -74,7 +74,7 @@ def train_model(word_vectors, embed_size, data_map):
     model = ConditionalLSTM(word_vectors, embed_size, hidden_size, output_size, batch_size)
 
     if use_gpu:
-        model = model.to(torch.device("cuda:0"))
+        model = model.cuda()
 
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
@@ -89,9 +89,9 @@ def train_model(word_vectors, embed_size, data_map):
     train_response_loader = data_map.get('train_response')
     train_context_loader = data_map.get('train_context')
 
-    model.train()
-
     for epoch in range(epochs):
+        model.train()
+
         # Adjust learning rate using optimizer
         print("*" * 10)
         print("Epoch #{}".format(epoch))
@@ -104,6 +104,11 @@ def train_model(word_vectors, embed_size, data_map):
             context_inputs = x[0][1][0]
             response_inputs = x[1][1][0]
             train_labels = x[0][1][1]
+
+            if use_gpu:
+                context_inputs = context_inputs.cuda()
+                response_inputs = response_inputs.cuda()
+                train_labels = train_labels.cuda()
 
             if context_inputs.size()[0] < batch_size:
                 break
@@ -163,11 +168,15 @@ def evaluate_test(model, data_map):
         context_inputs = x[0][1][0]
         response_inputs = x[1][1][0]
 
+        if use_gpu:
+            context_inputs = context_inputs.cuda()
+            response_inputs = response_inputs.cuda()
+
         if context_inputs.size()[0] < batch_size:
             break
 
         pred_data = model(context_inputs, response_inputs)
-        pred_labels = torch.max(pred_data, 1)[1]
+        pred_labels = torch.max(pred_data, 1)[1].cpu()
         all_pred_labels.extend(pred_labels)
 
     # make sure gold_labels is truncated to the same length as all_pred_labels

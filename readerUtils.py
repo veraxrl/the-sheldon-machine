@@ -88,6 +88,8 @@ def torch_from_json(path, dtype=torch.float32):
         array = np.array(json.load(fh))
 
     tensor = torch.from_numpy(array).type(dtype)
+    if torch.cuda.is_available():
+        tensor = tensor.cuda()
 
     return tensor
 
@@ -185,7 +187,8 @@ def read_reddit_data(file="./data/reddit/train-balanced-sarcasm.csv"):
 
 if __name__ == '__main__':
     # read_discussion_forum()
-    save_discussion_forum_data()
+    # save_discussion_forum_data()
+    save_reddit_data()
     # with open('./data/discussion/discussion_forum_indices', 'rb') as f:
     #     my_list = pickle.load(f)
     #     print(my_list)

@@ -72,6 +72,8 @@ def prepare_data(args: List):
 def train_model(word_vectors, embed_size, data_map):
     ### MAIN:
     model = LSTMClassifier(word_vectors, embed_size, hidden_size, output_size, batch_size)
+    if use_gpu:
+        model.cuda()
     optimizer = optim.Adam(model.parameters(), lr=learning_rate)
     # loss_function = nn.CrossEntropyLoss()
     loss_function = nn.NLLLoss()
@@ -83,10 +85,11 @@ def train_model(word_vectors, embed_size, data_map):
     all_sar = 0
 
     train_response_loader = data_map.get('train_response')
-
-    model.train()
+    print(model)
 
     for epoch in range(epochs):
+        model.train()
+
         # Adjust learning rate using optimizer
         print("*" * 10)
         print("Epoch #{}".format(epoch))
@@ -97,6 +100,10 @@ def train_model(word_vectors, embed_size, data_map):
 
         for iter, traindata in enumerate(train_response_loader):
             train_inputs, train_labels = traindata
+
+            if use_gpu:
+                train_inputs = train_inputs.cuda()
+                train_labels = train_labels.cuda()
 
             if train_inputs.size()[0] < batch_size:
                 break
@@ -150,16 +157,18 @@ def evaluate_test(model, data_map):
     test_response_loader = data_map['test_response']
 
     all_pred_labels = []
-    model.eval()
 
     for iter, test_data in enumerate(test_response_loader):
         test_inputs, test_labels = test_data
+        if use_gpu:
+            test_inputs = test_inputs.cuda()
+            test_labels = test_labels.cuda()
 
         if test_inputs.size()[0] < batch_size:
             break
 
         pred_data = model(test_inputs)
-        pred_labels = torch.max(pred_data, 1)[1]
+        pred_labels = torch.max(pred_data, 1)[1].cpu()
         all_pred_labels.extend(pred_labels)
 
     # make sure gold_labels is truncated to the same length as all_pred_labels

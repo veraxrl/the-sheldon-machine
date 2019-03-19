@@ -20,9 +20,12 @@ class LSTMClassifier(nn.Module):
         self.hidden = self.init_hidden()
 
     def init_hidden(self):
-        ## Need to modify for GNU training https://github.com/jiangqy/LSTM-Classification-Pytorch/blob/master/utils/LSTMClassifier.py
-        h0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size))
-        c0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size))
+        if torch.cuda.is_available():
+            h0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size)).cuda()
+            c0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size)).cuda()
+        else: 
+            h0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size))
+            c0 = autograd.Variable(torch.zeros(1, self.batch_size, self.hidden_size))
         return (h0, c0)
 
     def forward(self, source):
